@@ -1,0 +1,46 @@
+# ------------ MAIN SCRIPT STARTS HERE -----------------
+ 
+if __name__ == '__main__':
+ 
+  QFISH_VERSION = '1.1.1'
+  ReleaseDate   = "October 2, 2015"
+ 
+  # Turn on Logging
+  logging.basicConfig(filename='QUICKFISH.log',level=logging.DEBUG,format='%(asctime)s %(message)s')
+ 
+  # Process the Command Line Arguments
+  ParseCommandLine()
+ 
+  # Record the Starting Time
+  startTime = time.time()
+ 
+  # Record the Welcome Message
+  logging.info('')
+  logging.info('Welcome to QUICKFISH')
+  logging.info('Version'+ QFISH_VERSION)
+  logging.info('Release Date: '+ ReleaseDate)
+  logging.info('\nStart Scan\n')
+  logging.info('')
+  DisplayMessage('Wecome to QUICKFISH Version: '+ QFISH_VERSION + ' Release Date: ' + ReleaseDate + '\n')
+ 
+  # Record some information regarding the system
+  logging.info('System:  '+ sys.platform)
+  logging.info('Version: '+ sys.version)
+ 
+  # Traverse the file system directories and hash the files
+  filesProcessed = WalkPath()
+ 
+  # Record the end time and calculate the duration
+  endTime = time.time()
+  duration = endTime - startTime
+ 
+  logging.info('Files Processed: ' + str(filesProcessed) )
+  logging.info('Elapsed Time: ' + str(duration) + ' seconds')
+  logging.info('')
+  logging.info('Program Terminated Normally')
+  logging.info('')
+ 
+  DisplayMessage('Files Processed: ' + str(filesProcessed) )
+  DisplayMessage('Elapsed Time: ' + str(duration) + ' seconds')
+  DisplayMessage('')
+  DisplayMessage("Program End")
