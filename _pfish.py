@@ -24,9 +24,9 @@ import time
 import hashlib
 import argparse
 import csv
-import logging
+import logging as log
 
-log = logging.getLogger('main._pfish')
+log = log.getLogger('main._pfish')
 
 # ========================================
 #
@@ -77,7 +77,7 @@ def ParseCommandLine():
 		gl_hashType = 'SHA512'
 	else:
 		gl_hashType = "Unknown"
-		logging.error('Unknown Hash Type Specified')
+		log.error('Unknown Hash Type Specified')
 	DisplayMessage("Command line processed. Successfully")
 	
 	return
@@ -142,6 +142,150 @@ def HashFile(theFile, simpleName, o_result):
 					f = open(theFile, 'rb')
 				except IOError:
 					# if open fails report error
-	
-	
-	
+					log.warning('Open Failed: ' + theFile)
+					return
+				else:
+					try:
+						# Get the Basic File Attributes
+						# Before attempting to open the file
+						# This should preserve the access time on most OS's
+
+						theFileStats = os.stat(theFile)
+						(mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(theFile)
+
+						# Attempt to read the file
+						rd = f.read()
+
+					except IOError:
+						# if read fails, then close the file and report error
+						f.close()
+						log.warning('File Access Error: ' + theFile)
+						return
+					else:
+
+						# Print the simple file name
+						DisplayMessage("Processing File: " + theFile)
+						log.info("Processing File: " + theFile)
+
+						# Get the size of the file in Bytes
+						fileSize = str(size)
+
+						# Get MAC Times
+						modifiedTime = time.ctime(mtime)
+						accessTime = time.ctime(atime)
+						createdTime = time.ctime(ctime)
+
+						ownerID = str(uid)
+						groupID = str(gid)
+						fileMode = bin(mode)
+
+						# process the file hashes
+
+						if gl_args.md5:
+							# Calculate and Print the MD5
+							hash = hashlib.md5()
+							hash.update(rd)
+							hexMD5 = hash.hexdigest()
+							hashValue = hexMD5.upper()
+						elif gl_args.sha256:
+							hash = hashlib.sha256()
+							hash.update(rd)
+							hexSHA256 = hash.hexdigest()
+							hashValue = hexSHA256.upper()
+						elif gl_args.sha512:
+							# Calculate and Print the SHA512
+							hash = hashlib.sha512()
+							hash.update(rd)
+							hexSHA512 = hash.hexdigest()
+							hashValue = hexSHA512.upper()
+						else:
+							log.error('Hash not Selected')
+
+							# File processing complete
+							# Close the active file
+							print "==================================="
+							f.close()
+
+						# write one row to the output file
+
+						o_result.writeCSVRow(simpleName, theFile, fileSize, modifiedTime, accessTime, createdTime, hashValue, ownerID, groupID, mode)
+						return True
+			else:
+					log.warning('[' + repr(simpleName) + ', Skipped NOT a File' + ']')
+					return False
+		else:
+					log.warning('[' + repr(simpleName) + ', Skipped Link NOT a File' + ']')
+					return False
+	else:
+					log.warning('[' + repr(simpleName) + ', Path does NOT exist' + ']')
+	return False
+
+# ========================================
+#
+# FUNCTION: ValidateDirectory()
+#
+# Desc:		validates directory path as existing and readable
+# Input:	a string representing the directory path
+# Actions:	Validate directory string
+#
+
+def ValidateDirectory(theDir):
+	# Validate the path is a directory
+	if not os.path.isdir(theDir):
+		raise argparse.ArgumentTypeError('Directory does not exist')
+
+	# Validate the path is readable
+	if os.access(theDir, os.R_OK):
+		return theDir
+	else:
+		raise argparse.ArgumentTypeError('Directory is not readable')
+
+
+#
+# ValidateDirectoryWritable()
+#
+# Desc: Function that will validate a directory path as
+#           existing and writable.  Used for argument validation only
+#
+# Input: a directory path string
+#
+# Actions:
+#              if valid will return the Directory String
+#
+#              if invalid it will raise an ArgumentTypeError within argparse
+#              which will inturn be reported by argparse to the user
+#
+
+def ValidateDirectoryWritable(theDir):
+	# Validate the path is a directory
+	if not os.path.isdir(theDir):
+		raise argparse.ArgumentTypeError('Directory does not exist')
+
+	# Validate the path is writable
+	if os.access(theDir, os.W_OK):
+		return theDir
+	else:
+		raise argparse.ArgumentTypeError('Directory is not writable')
+
+# ========================================
+#
+# CLASS: _CVSWriter
+#
+#
+class _CSVWriter:
+
+	def __init__(self, fileName, hashType):
+		try:
+			# create a writer object and then write the header row
+			self.csvFile = open(fileName, 'wb')
+			self.writer = csv.writer(self.csvFile, delimiter=',', quoting=csv.QUOTE_ALL)
+			self.writer.writerow(('File', 'Path', 'Size', 'Modified Time', 'Accessed Time', 'Created Time', 'hashType', 'Owner', 'Group', 'Mode'))
+		except:
+			log.error('CSV File Failure')
+
+	def writeCSVRow(self, fileName, filePath, fileSize, mTime, aTime, cTime, hashVal, own, grp, mod):
+
+		self.writer.writerow((fileName, filePath, fileSize, mTime, aTime, cTime, hashVal, own, grp, mod))
+
+	def writerClose(self):
+		self.csvFile.close()

@@ -26,9 +26,7 @@ if __name__=='__main__':
 	# Record the starting time
 	startTime = time.time()
 	# Welcome message
-	logging.info(")
 	logging.info('Welcome to pfish version ' + PFISH_VERSION + ' ... New Scan Started...')
-	logging.info(")
 	_pfish.DisplayMessage('Welcome to pfish ... version ' + PFISH_VERSION)
 	# Record some system information
 	logging.info('System: ' + sys.platform)
@@ -38,13 +36,11 @@ if __name__=='__main__':
 	filesProcessed = _pfish.WalkPath()
 
 	# Record the end time and calculate the duration
-	endTime() = time.time()
+	endTime = time.time()
 	duration = endTime - startTime
 	logging.info('Files Processed: ' + str(filesProcessed))
 	logging.info('Elapsed Time: ' + str(duration) + ' seconds')
-	logging.info(")
 	logging.info('Program Terminated Normally')
-	logging.info(")
 	
 	_pfish.DisplayMessage("Program End")
 
